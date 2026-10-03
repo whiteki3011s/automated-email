@@ -1,0 +1,107 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  campaigns     Campaign[]
+  inboxes       Inbox[]
+}
+
+model Inbox {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  senderName    String
+  fromEmail     String      @unique
+  smtpHost      String
+  smtpPort      Int         @default(587)
+  smtpUser      String
+  smtpPass      String
+  
+  dailyLimit    Int         @default(40)
+  sentTodayCount Int        @default(0)
+  lastSentAt    DateTime?
+  status        String      @default("ACTIVE")
+  
+  emails        Email[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name           String
+  serviceContext String
+  status         String         @default("DRAFT")
+  
+  leads          Lead[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  campaignId     String
+  campaign       Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  domain         String
+  companyName    String?
+  contactEmail   String?
+  
+  scrapedContent String?
+  flawsFound     String?
+  
+  status         String     @default("SOURCED")
+  
+  emails         Email[]
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([campaignId])
+  @@index([status])
+}
+
+model Email {
+  id           String      @id @default(cuid())
+  leadId       String
+  lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  inboxId      String?
+  inbox        Inbox?      @relation(fields: [inboxId], references: [id], onDelete: SetNull)
+  
+  subject      String
+  bodyText     String
+  status       String      @default("DRAFT")
+  
+  sentAt       DateTime?
+  errorMessage String?
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([leadId])
+  @@index([inboxId])
+  @@index([status])
+}

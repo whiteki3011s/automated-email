@@ -1,0 +1,23 @@
+# Node.js
+node_modules/
+.next/
+out/
+build/
+dist/
+*.log
+
+# Database files
+*.db
+*.db-journal
+
+# Environment variables
+.env
+.env*.local
+.env.production
+.env.development
+
+# IDE / OS
+.DS_Store
+*.pem
+.vscode/
+.idea/
