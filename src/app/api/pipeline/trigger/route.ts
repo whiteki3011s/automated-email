@@ -11,11 +11,18 @@ export async function POST(req: Request) {
 
     const whereClause = campaignId ? { campaignId } : {};
 
-    // 1. Process SOURCED leads -> SCRAPED
-    const sourcedLeads = await prisma.lead.findMany({
-      where: { ...whereClause, status: "SOURCED" },
-    });
+    const phase = body.phase || "ALL";
 
+    // Fetch initial status cohorts at start of cycle so leads advance one stage per cycle
+    const sourcedLeads = (phase === "ALL" || phase === "SCRAPE") 
+      ? await prisma.lead.findMany({ where: { ...whereClause, status: "SOURCED" } })
+      : [];
+
+    const scrapedLeads = (phase === "ALL" || phase === "DRAFT")
+      ? await prisma.lead.findMany({ where: { ...whereClause, status: "SCRAPED" }, include: { campaign: true } })
+      : [];
+
+    // 1. Process SOURCED leads -> SCRAPED (Scrapes website + extracts real contact email)
     for (const lead of sourcedLeads) {
       try {
         const scrapeResult = await scrapeTargetWebsite(lead.domain);
@@ -24,6 +31,7 @@ export async function POST(req: Request) {
           data: {
             scrapedContent: scrapeResult.markdownContent,
             flawsFound: JSON.stringify(scrapeResult.flawsSummary),
+            contactEmail: scrapeResult.contactEmail || `hello@${lead.domain}`,
             status: "SCRAPED",
           },
         });
@@ -32,50 +40,61 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Process SCRAPED leads -> AI_DRAFTED
-    const scrapedLeads = await prisma.lead.findMany({
-      where: { ...whereClause, status: "SCRAPED" },
-      include: { campaign: true },
-    });
-
-    for (const lead of scrapedLeads) {
-      try {
-        let flaws: string[] = [];
-        if (lead.flawsFound) {
-          try {
-            flaws = typeof lead.flawsFound === "string" ? JSON.parse(lead.flawsFound) : lead.flawsFound;
-          } catch {
-            flaws = [String(lead.flawsFound)];
+    await Promise.all(
+      scrapedLeads.map(async (lead) => {
+        try {
+          let flaws: string[] = [];
+          if (lead.flawsFound) {
+            try {
+              flaws = typeof lead.flawsFound === "string" ? JSON.parse(lead.flawsFound) : lead.flawsFound;
+            } catch {
+              flaws = [String(lead.flawsFound)];
+            }
           }
+
+          const pitch = await generateAIPitch(
+            lead.domain,
+            lead.scrapedContent || "",
+            flaws,
+            lead.campaign?.serviceContext || "High-end web design and Next.js optimization."
+          );
+
+          const existingEmail = await prisma.email.findFirst({
+            where: { leadId: lead.id },
+          });
+
+          if (existingEmail) {
+            await prisma.email.update({
+              where: { id: existingEmail.id },
+              data: {
+                subject: pitch.subject,
+                bodyText: pitch.bodyText,
+                status: "DRAFT",
+              },
+            });
+          } else {
+            await prisma.email.create({
+              data: {
+                leadId: lead.id,
+                subject: pitch.subject,
+                bodyText: pitch.bodyText,
+                status: "DRAFT",
+              },
+            });
+          }
+
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: {
+              flawsFound: JSON.stringify(pitch.flaws),
+              status: "AI_DRAFTED",
+            },
+          });
+        } catch (e) {
+          console.error(`AI draft trigger error for ${lead.domain}:`, e);
         }
-
-        const pitch = await generateAIPitch(
-          lead.domain,
-          lead.scrapedContent || "",
-          flaws,
-          lead.campaign?.serviceContext || "High-end web design and Next.js optimization."
-        );
-
-        await prisma.email.create({
-          data: {
-            leadId: lead.id,
-            subject: pitch.subject,
-            bodyText: pitch.bodyText,
-            status: "DRAFT",
-          },
-        });
-
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
-            flawsFound: JSON.stringify(pitch.flaws),
-            status: "AI_DRAFTED",
-          },
-        });
-      } catch (e) {
-        console.error(`AI draft trigger error for ${lead.domain}:`, e);
-      }
-    }
+      })
+    );
 
     // 3. Process QUEUED / APPROVED emails -> SENT
     const queuedEmails = await prisma.email.findMany({
@@ -104,8 +123,8 @@ export async function POST(req: Request) {
             activeInbox = await prisma.inbox.create({
               data: {
                 userId: defaultUser.id,
-                senderName: "Abhay Sharma",
-                fromEmail: "outreach@domain.com",
+                senderName: "Jamie Stone",
+                fromEmail: "jamie@northstar.studio",
                 smtpHost: "sandbox.smtp.mailtrap.io",
                 smtpPort: 2525,
                 smtpUser: "test_user",
@@ -117,8 +136,8 @@ export async function POST(req: Request) {
           }
         }
 
-        // Send Email
-        const recipient = email.lead.contactEmail || `contact@${email.lead.domain}`;
+        // Send Email to the REAL scraped contact address
+        const recipient = email.lead.contactEmail || `hello@${email.lead.domain}`;
         await sendPlainTextEmail({
           to: recipient,
           fromName: activeInbox.senderName,

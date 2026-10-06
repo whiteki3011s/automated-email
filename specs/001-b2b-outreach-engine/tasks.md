@@ -126,4 +126,18 @@ graph TD
     US3 --> Polish
     US4 --> Polish
     US5 --> Polish
+    Polish --> Conv[Phase 9: Convergence Tasks]
 ```
+
+---
+
+## Phase 9: Convergence
+
+**Purpose**: Remediate gaps between Constitution v1.2.0 principles and current implementation
+
+- [X] T030 Implement MNC and Enterprise exclusion filtering heuristic per Constitution IV (missing)
+- [X] T031 Implement social media and web directory lead scraper adapters (Instagram, LinkedIn, Google Maps) per Constitution IV (missing)
+- [X] T032 Implement automated daily cron sourcing worker for 100-200 SMB prospects per Constitution IV (missing)
+- [X] T033 Implement Need-Based Qualification Gate in pipeline worker to reject leads without verifiable service flaws per Constitution IV (missing)
+- [X] T034 Implement LLM response intent classifier and automated order creation for positive lead replies per Constitution VI (missing)
+

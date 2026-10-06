@@ -6,12 +6,12 @@ import type { LeadItem } from "./LeadCard";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 
 const COLUMNS: { key: LeadItem["status"]; title: string; color: string }[] = [
-  { key: "SOURCED", title: "Sourced", color: "border-zinc-700" },
-  { key: "SCRAPED", title: "Scraped", color: "border-blue-600/60" },
-  { key: "AI_DRAFTED", title: "AI Drafted", color: "border-amber-600/60" },
-  { key: "APPROVED", title: "Approved", color: "border-emerald-600/60" },
-  { key: "SENT", title: "Sent", color: "border-purple-600/60" },
-  { key: "REPLIED", title: "Replied", color: "border-teal-500/60" },
+  { key: "SOURCED", title: "1. Sourced", color: "border-zinc-700" },
+  { key: "SCRAPED", title: "2. Qualified / Scraped", color: "border-blue-600/60" },
+  { key: "AI_DRAFTED", title: "3. AI Pitch Drafted", color: "border-amber-600/60" },
+  { key: "APPROVED", title: "4. Approved for Dispatch", color: "border-purple-600/60" },
+  { key: "SENT", title: "5. Dispatched (Plain Text)", color: "border-teal-500/60" },
+  { key: "REPLIED_ORDER_CREATED", title: "6. Client Orders (Fulfill)", color: "border-emerald-500 shadow-emerald-900/30" },
 ];
 
 interface KanbanBoardProps {

@@ -22,7 +22,7 @@ export const sendingWorker = new Worker(
       orderBy: { sentTodayCount: "asc" },
     });
 
-    let assignedInbox = activeInboxes.find((i) => i.sentTodayCount < i.dailyLimit);
+    let assignedInbox = activeInboxes.find((i) => i.sentTodayCount < i.dailyLimit) || null;
 
     if (!assignedInbox) {
       // Fallback: Create or get default inbox
@@ -33,8 +33,10 @@ export const sendingWorker = new Worker(
         });
       }
 
-      assignedInbox = await prisma.inbox.findFirst({ where: { userId: defaultUser.id } });
-      if (!assignedInbox) {
+      const existingInbox = await prisma.inbox.findFirst({ where: { userId: defaultUser.id } });
+      if (existingInbox) {
+        assignedInbox = existingInbox;
+      } else {
         assignedInbox = await prisma.inbox.create({
           data: {
             userId: defaultUser.id,
@@ -56,7 +58,7 @@ export const sendingWorker = new Worker(
       throw new Error(`Inbox ${assignedInbox.fromEmail} has reached daily rate limit of ${assignedInbox.dailyLimit}`);
     }
 
-    const recipient = email.lead.contactEmail || `contact@${email.lead.domain}`;
+    const recipient = email.lead.contactEmail || `hello@${email.lead.domain}`;
 
     const dispatchResult = await sendPlainTextEmail({
       to: recipient,
