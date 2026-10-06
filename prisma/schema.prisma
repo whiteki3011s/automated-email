@@ -61,23 +61,29 @@ model Campaign {
 }
 
 model Lead {
-  id             String     @id @default(cuid())
+  id             String        @id @default(cuid())
   campaignId     String
-  campaign       Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign       Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   
   domain         String
   companyName    String?
   contactEmail   String?
+  socialHandle   String?
+  sourcePlatform String        @default("WEB")
+  category       String        @default("SMB")
   
   scrapedContent String?
   flawsFound     String?
+  qualificationScore Int       @default(0)
+  rejectionReason   String?
   
-  status         String     @default("SOURCED")
+  status         String        @default("SOURCED")
   
   emails         Email[]
+  orderTickets   OrderTicket[]
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([campaignId])
   @@index([status])
@@ -105,3 +111,21 @@ model Email {
   @@index([inboxId])
   @@index([status])
 }
+
+model OrderTicket {
+  id           String      @id @default(cuid())
+  leadId       String
+  lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  intent       String      @default("INTERESTED_ORDER")
+  summary      String
+  clientNeeds  String
+  status       String      @default("PENDING_FULFILLMENT")
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([leadId])
+  @@index([status])
+}
+

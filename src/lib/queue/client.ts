@@ -7,6 +7,7 @@ const connection = new Redis(env.REDIS_URL, {
   lazyConnect: true,
 });
 
+export const sourcingQueue = new Queue("daily-sourcing-queue", { connection });
 export const scrapeQueue = new Queue("scrape-lead-queue", { connection });
 export const aiDraftQueue = new Queue("ai-draft-queue", { connection });
 export const dispatchQueue = new Queue("dispatch-email-queue", { connection });

@@ -11,15 +11,16 @@ export async function GET(req: Request) {
     });
 
     const leads = rawLeads.map((l) => {
-      let flaws = l.flawsFound;
-      if (typeof l.flawsFound === "string") {
+      let flaws: string[] = [];
+      if (l.flawsFound) {
         try {
-          flaws = JSON.parse(l.flawsFound);
+          const parsed = JSON.parse(l.flawsFound);
+          flaws = Array.isArray(parsed) ? parsed : [l.flawsFound];
         } catch {
           flaws = [l.flawsFound];
         }
       }
-      return { ...l, flawsFound: flaws };
+      return { ...l, flawsFoundParsed: flaws };
     });
 
     const groupedLeads = {
@@ -29,7 +30,9 @@ export async function GET(req: Request) {
       APPROVED: leads.filter((l) => l.status === "APPROVED"),
       SENT: leads.filter((l) => l.status === "SENT"),
       REPLIED: leads.filter((l) => l.status === "REPLIED"),
-      REJECTED: leads.filter((l) => l.status === "REJECTED"),
+      REJECTED: leads.filter((l) => l.status === "REJECTED" || l.status === "REJECTED_MNC" || l.status === "REJECTED_NO_NEED"),
+      REJECTED_MNC: leads.filter((l) => l.status === "REJECTED_MNC"),
+      REJECTED_NO_NEED: leads.filter((l) => l.status === "REJECTED_NO_NEED"),
     };
 
     return NextResponse.json({ success: true, leads: groupedLeads, rawLeads: leads });
@@ -39,7 +42,7 @@ export async function GET(req: Request) {
       {
         success: false,
         error: error.message || "Failed to fetch leads",
-        leads: { SOURCED: [], SCRAPED: [], AI_DRAFTED: [], APPROVED: [], SENT: [], REPLIED: [], REJECTED: [] },
+        leads: { SOURCED: [], SCRAPED: [], AI_DRAFTED: [], APPROVED: [], SENT: [], REPLIED: [], REJECTED: [], REJECTED_MNC: [], REJECTED_NO_NEED: [] },
         rawLeads: [],
       },
       { status: 500 }

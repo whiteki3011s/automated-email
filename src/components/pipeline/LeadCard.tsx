@@ -9,9 +9,14 @@ export interface LeadItem {
   id: string;
   domain: string;
   companyName?: string;
-  status: "SOURCED" | "SCRAPED" | "AI_DRAFTED" | "APPROVED" | "SENT" | "REPLIED" | "REJECTED";
+  contactEmail?: string;
+  category?: string;
+  qualificationScore?: number;
+  rejectionReason?: string;
+  status: "SOURCED" | "SCRAPED" | "AI_DRAFTED" | "APPROVED" | "SENT" | "REPLIED" | "REPLIED_ORDER_CREATED" | "REJECTED" | "REJECTED_MNC" | "REJECTED_NO_NEED";
   flawsFound?: any;
   emails?: any[];
+  orderTickets?: any[];
   createdAt: string;
 }
 
@@ -38,29 +43,41 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onClick }) => {
   const flaws = getFlaws(lead.flawsFound);
   const activeEmail = lead.emails && lead.emails.length > 0 ? lead.emails[0] : null;
 
-  const statusVariantMap = {
+  const statusVariantMap: Record<string, any> = {
     SOURCED: "sourced",
     SCRAPED: "scraped",
     AI_DRAFTED: "drafted",
     APPROVED: "approved",
     SENT: "sent",
     REPLIED: "replied",
+    REPLIED_ORDER_CREATED: "order",
     REJECTED: "rejected",
-  } as const;
+    REJECTED_MNC: "mnc_excluded",
+    REJECTED_NO_NEED: "no_need",
+  };
 
   return (
     <GlassPanel
       hoverEffect
       onClick={onClick}
-      className="p-3.5 space-y-2 border-zinc-800/80 bg-obsidian-850/90 text-xs"
+      className="p-3.5 space-y-2 border-zinc-800/80 bg-obsidian-850/90 text-xs relative group cursor-pointer"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 overflow-hidden">
           <Globe className="w-3.5 h-3.5 text-silver-400 flex-shrink-0" />
           <span className="font-mono font-medium text-white truncate">{lead.domain}</span>
         </div>
-        <Badge variant={statusVariantMap[lead.status] || "default"}>{lead.status}</Badge>
+        <Badge variant={statusVariantMap[lead.status] || "default"}>
+          {lead.status === "REPLIED_ORDER_CREATED" ? "CLIENT ORDER" : lead.status}
+        </Badge>
       </div>
+
+      {lead.qualificationScore !== undefined && lead.qualificationScore > 0 && (
+        <div className="flex items-center justify-between text-[10px] font-mono pt-1 text-zinc-400">
+          <span>Need Score:</span>
+          <span className="text-emerald-400 font-bold">{lead.qualificationScore}/100</span>
+        </div>
+      )}
 
       {flaws.length > 0 && (
         <div className="mt-1 space-y-1">

@@ -25,7 +25,7 @@ export async function generateAIPitch(
     try {
       llm = new ChatGoogleGenerativeAI({
         apiKey: env.GOOGLE_API_KEY,
-        modelName: "gemini-1.5-pro",
+        modelName: "gemini-2.0-flash",
         temperature: 0.3,
       });
     } catch (e) {
@@ -52,9 +52,12 @@ export async function generateAIPitch(
       const flawRes = await llm.invoke(flawInput);
       const flawRawText = flawRes.content ? flawRes.content.toString() : "";
       
-      const flawParsed = JSON.parse(flawRawText.replace(/```json|```/g, "").trim());
-      if (Array.isArray(flawParsed.flaws) && flawParsed.flaws.length > 0) {
-        flaws = flawParsed.flaws;
+      const flawMatch = flawRawText.match(/\{[\s\S]*\}/);
+      if (flawMatch) {
+        const flawParsed = JSON.parse(flawMatch[0]);
+        if (Array.isArray(flawParsed.flaws) && flawParsed.flaws.length > 0) {
+          flaws = flawParsed.flaws;
+        }
       }
 
       // Pass 2: Generate Pitch Email
@@ -67,13 +70,15 @@ export async function generateAIPitch(
       const pitchRes = await llm.invoke(pitchInput);
       const pitchRawText = pitchRes.content ? pitchRes.content.toString() : "";
       
-      const pitchParsed = JSON.parse(pitchRawText.replace(/```json|```/g, "").trim());
-
-      return {
-        subject: pitchParsed.subject || `UI recommendation for ${domain}`,
-        bodyText: pitchParsed.bodyText || pitchRawText,
-        flaws,
-      };
+      const pitchMatch = pitchRawText.match(/\{[\s\S]*\}/);
+      if (pitchMatch) {
+        const pitchParsed = JSON.parse(pitchMatch[0]);
+        return {
+          subject: pitchParsed.subject || `UI recommendation for ${domain}`,
+          bodyText: pitchParsed.bodyText || pitchRawText,
+          flaws,
+        };
+      }
     } catch (error) {
       console.warn("LangChain LLM execution failed, falling back to heuristic generator:", error);
     }

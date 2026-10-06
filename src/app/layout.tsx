@@ -3,8 +3,8 @@ import "@/styles/globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Autonomous B2B Lead Generation & Outreach Engine",
-  description: "High-performance B2B lead generation, site flaw extraction, AI personalization, and deliverability pipeline.",
+  title: "AXIOM Business Engine",
+  description: "Autonomous front-of-house lead generation, site flaw extraction, AI personalization, and client order handoff.",
 };
 
 export default function RootLayout({
@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-obsidian-900 text-silver-liquid min-h-screen flex antialiased">
+    <html lang="en">
+      <body className="bg-[#F8F9FA] text-slate-900 min-h-screen flex antialiased">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {children}

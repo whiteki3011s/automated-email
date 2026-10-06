@@ -16,7 +16,16 @@ export const aiWorker = new Worker(
 
     if (!lead) throw new Error(`Lead ${leadId} not found`);
 
-    const flaws = Array.isArray(lead.flawsFound) ? (lead.flawsFound as string[]) : [];
+    let flaws: string[] = [];
+    if (lead.flawsFound) {
+      try {
+        const parsed = JSON.parse(lead.flawsFound);
+        flaws = Array.isArray(parsed) ? parsed : [lead.flawsFound];
+      } catch {
+        flaws = [lead.flawsFound];
+      }
+    }
+
     const serviceContext = lead.campaign?.serviceContext || "High-end UI/UX redesign & web performance.";
 
     const pitch = await generateAIPitch(
@@ -26,20 +35,36 @@ export const aiWorker = new Worker(
       serviceContext
     );
 
-    // Save pitch as Email draft
-    const email = await prisma.email.create({
-      data: {
-        leadId: lead.id,
-        subject: pitch.subject,
-        bodyText: pitch.bodyText,
-        status: "DRAFT",
-      },
+    // Check if an email draft already exists for this lead
+    const existingEmail = await prisma.email.findFirst({
+      where: { leadId: lead.id },
     });
+
+    let email;
+    if (existingEmail) {
+      email = await prisma.email.update({
+        where: { id: existingEmail.id },
+        data: {
+          subject: pitch.subject,
+          bodyText: pitch.bodyText,
+          status: "DRAFT",
+        },
+      });
+    } else {
+      email = await prisma.email.create({
+        data: {
+          leadId: lead.id,
+          subject: pitch.subject,
+          bodyText: pitch.bodyText,
+          status: "DRAFT",
+        },
+      });
+    }
 
     await prisma.lead.update({
       where: { id: lead.id },
       data: {
-        flawsFound: pitch.flaws,
+        flawsFound: JSON.stringify(pitch.flaws),
         status: "AI_DRAFTED",
       },
     });

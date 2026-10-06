@@ -1,52 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 9 9 11;
-    --foreground: 226 232 240;
-  }
-
   body {
-    background-color: #09090b;
-    color: #e2e8f0;
+    background-color: #F8F9FA;
+    color: #0F172A;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Custom Scrollbar for Industrial Dark Theme */
+/* Custom Scrollbar for Industrial Axiom Theme */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #F1F3F5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 3px;
+  background: #CBD5E1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #94A3B8;
 }
 
-/* Glassmorphism panel helper classes */
-.glass-panel {
-  background: rgba(18, 18, 21, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Card Panel Classes */
+.axiom-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
-.glass-panel-hover {
-  transition: all 0.2s ease-in-out;
+.axiom-card-hover {
+  transition: all 0.15s ease-in-out;
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+.axiom-card-hover:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
 }
